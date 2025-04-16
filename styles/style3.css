@@ -1,0 +1,20 @@
+textarea.hidden {
+    display: none;
+  }
+  
+  .highlight {
+    background-color: yellow;
+  }
+  
+  .note {
+    background: #f3f3f3;
+    border-left: 3px solid #aaa;
+    padding: 0.5rem;
+    margin-top: 0.5rem;
+  }
+  
+  p.has-note {
+    background-color: var(--pinkish-color);
+    padding: .5em;
+  }
+  

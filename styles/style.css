@@ -1,0 +1,171 @@
+@font-face {
+    font-family: OpenDyslexic;
+    src: url(../fonts/OpenDyslexic-Regular.otf);
+    font-style: normal;
+    font-display: fallback;
+}
+
+@font-face {
+    font-family: OpenDyslexic-Bold;
+    src: url(../fonts/OpenDyslexic-Bold.otf);
+
+    font-weight: bold;
+    font-display: fallback;
+}
+
+:root {
+    color-scheme: light dark;
+
+
+    --black-color: light-dark(#f9fcfa, #080604);
+    --pinkish-color: light-dark(#de5d62, #4563b6);
+    --yellowish-color: light-dark(#eca900, #FFC100);
+    --whitish-color: light-dark(#19120b, #f9fcfa);
+    --grayish-color: #697268;
+    --default-font-family: verdana;
+
+    --fontsize--2: clamp(0.7813rem, 0.7747rem + 0.0326vw, 0.8rem);
+    --fontsize--1: clamp(0.9375rem, 0.9158rem + 0.1087vw, 1rem);
+    --fontsize-0: 16px;
+    --fontsize-0-1: clamp(1.125rem, 1.0815rem + 0.2874vw, 1.3rem);
+    --fontsize-1: clamp(1.35rem, 1.2761rem + 0.3696vw, 1.5625rem);
+    --fontsize-2: clamp(1.62rem, 1.5041rem + 0.5793vw, 1.9531rem);
+    --fontsize-3: clamp(1.944rem, 1.771rem + 0.8651vw, 2.4414rem);
+    --fontsize-4: clamp(2.3328rem, 2.0827rem + 1.2504vw, 3.0518rem);
+    --fontsize-5: clamp(2.7994rem, 2.4462rem + 1.7658vw, 3.8147rem);
+    --fontsize-6: clamp(3.3592rem, 2.8691rem + 2.4507vw, 4.7684rem);
+}
+
+
+* {
+    padding: 0;
+    margin: 0;
+    font-family: var(--default-font-family);
+    color: var(--yellowish-color);
+}
+
+/* Removed the --font-now update as it will be handled by JavaScript */
+
+body {
+    overflow: clip;
+
+    background-color: var(--black-color);
+}
+
+header {
+
+    display: flex;
+    justify-content: end;
+    height: 3vh;
+    padding: 1rem 2rem;
+
+
+    nav {
+        position: absolute;
+        width: 50vw;
+        top: 0;
+        bottom: 0;
+        right: -60vw;
+        transition: .3s;
+
+        padding: 3rem 2rem;
+        background-color: var(--black-color);
+
+    }
+}
+
+
+
+main {
+    display: flex;
+    justify-content: center;
+    overflow: clip;
+    height:calc(100vh - 12vh);
+}
+
+h1, h2, h3, p, label {
+    color: var(--yellowish-color);
+}
+
+p {
+    font-size: var(--fontsize-0);
+    font-weight: 400;
+    line-height: 1.5;
+    letter-spacing: 1px;
+}
+
+li {
+    list-style: none;
+}
+
+
+
+#notesPanel {
+
+    width: 20%;
+    background-color: var(--black-color);
+    color: var(--whitish-color);
+    padding: 1rem;
+    overflow-y: auto;
+}
+
+#notesList {
+    list-style: none;
+    padding: 0;
+}
+
+#notesList li {
+    margin-bottom: 1rem;
+    border-bottom: 1px solid var(--grayish-color);
+    padding-bottom: 0.5rem;
+}
+
+
+section:nth-of-type(1) {
+    overflow-y: scroll;
+    width: 70%;
+    padding: 1rem;
+
+    h2 {
+        padding-bottom: 1rem;
+    }
+
+    p {
+        padding-bottom: 3rem;
+    }
+}
+
+textarea.hidden {
+    display: none;
+}
+
+
+
+.highlight {
+    background-color: var(--pinkish-color);
+    transition: background-color 0.3s;
+}
+
+p.has-note {
+    background-color: var(--pinkish-color);
+    padding: .5em;
+}
+
+p:focus {
+    outline: var(--yellowish-color) 5px solid;
+}
+
+
+
+
+
+
+.visually-hidden {
+    clip: rect(0 0 0 0);
+    clip-path: inset(50%);
+    height: 1px;
+    overflow: hidden;
+    position: absolute;
+    white-space: nowrap;
+    width: 1px;
+  }
