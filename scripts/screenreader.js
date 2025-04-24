@@ -17,6 +17,7 @@ let currentFocusedParagraph = null;
 let isPaused = false;
 let currentSentenceIndex = 0;
 let highlightSentenceCount = 1;
+let noteFocusMode = false;
 
 // ======= Helper Functions =======
 function readText(text, callback = null) {
@@ -42,17 +43,30 @@ function setFocusableInNav(onlyInNav) {
     });
 }
 
+function enableNoteTabbing() {
+    const allNotes = document.querySelectorAll('.note, .note-textarea');
+    allFocusable.forEach(el => el.setAttribute('tabindex', '-1'));
+    paragraphs.forEach(p => p.setAttribute('tabindex', '-1'));
+    allNotes.forEach(note => note.setAttribute('tabindex', '0'));
+    if (allNotes.length > 0) allNotes[0].focus();
+}
+
+function disableNoteTabbing() {
+    allFocusable.forEach(el => el.setAttribute('tabindex', '0'));
+    paragraphs.forEach(p => p.setAttribute('tabindex', '0'));
+    const allNotes = document.querySelectorAll('.note, .note-textarea');
+    allNotes.forEach(note => note.removeAttribute('tabindex'));
+}
+
 // ======= Paragraph Reading & Notes =======
 paragraphs.forEach(p => {
     const originalText = p.textContent;
     const sentences = splitIntoSentences(originalText);
     p.setAttribute('tabindex', '0');
 
-    // Per-paragraph note storage
     p.notes = {};
 
     p.addEventListener('focus', () => {
-        // Clear highlights in other paragraphs
         paragraphs.forEach(otherP => {
             if (otherP !== p) {
                 const spans = otherP.querySelectorAll('.highlight');
@@ -71,7 +85,6 @@ paragraphs.forEach(p => {
     });
 
     p.addEventListener('keydown', (e) => {
-        // ✅ Ignore all key logic while typing in a note
         if (document.activeElement.tagName === 'TEXTAREA') return;
 
         if (e.key === ' ') {
@@ -132,31 +145,31 @@ paragraphs.forEach(p => {
     });
 
     function renderParagraph() {
-        p.innerHTML = ''; // Clear existing content
-    
+        p.innerHTML = '';
+
         sentences.forEach((sentence, index) => {
             const isHighlighted = index >= currentSentenceIndex && index < currentSentenceIndex + highlightSentenceCount;
-    
-            // Create sentence span
+
             const sentenceSpan = document.createElement('span');
             sentenceSpan.textContent = sentence;
             sentenceSpan.setAttribute('data-sentence-index', index);
             if (isHighlighted) {
                 sentenceSpan.classList.add('highlight');
             }
-    
+
             p.appendChild(sentenceSpan);
-    
-            // If a note exists for this sentence, create note span
+
             if (p.notes[index]) {
                 const noteSpan = document.createElement('span');
                 noteSpan.className = 'note';
                 noteSpan.textContent = p.notes[index];
                 noteSpan.setAttribute('data-sentence-index', index);
                 noteSpan.style.marginLeft = '0.5rem';
+                noteSpan.style.fontSize = '1.1rem';
+                noteSpan.style.fontWeight = 'bold';
                 noteSpan.style.cursor = 'pointer';
-    
-                // Add click event to make the note editable
+                if (noteFocusMode) noteSpan.setAttribute('tabindex', '0');
+
                 noteSpan.addEventListener('click', () => {
                     const textarea = document.createElement('textarea');
                     textarea.className = 'note-textarea';
@@ -164,12 +177,10 @@ paragraphs.forEach(p => {
                     textarea.style.width = '100%';
                     textarea.style.fontSize = '1rem';
                     textarea.style.marginTop = '0.5rem';
-    
-                    // Replace note span with textarea
+
                     noteSpan.replaceWith(textarea);
                     textarea.focus();
-    
-                    // Handle saving the edited note
+
                     textarea.addEventListener('keydown', (event) => {
                         if (event.key === 'Enter') {
                             event.preventDefault();
@@ -183,15 +194,13 @@ paragraphs.forEach(p => {
                         }
                     });
                 });
-    
+
                 p.appendChild(noteSpan);
             }
-    
-            // Add a space between sentences
+
             p.appendChild(document.createTextNode(' '));
         });
     }
-    
 
     function renderAndRead() {
         renderParagraph();
@@ -213,9 +222,24 @@ sliders.forEach(slider => {
     });
 });
 
-// ======= Accessibility Navigation Toggle =======
+// ======= Accessibility Navigation Toggle & Note Focus Mode =======
 document.addEventListener('keydown', (e) => {
-    if (e.key.toLowerCase() === 'f') {
+    const isTyping = document.activeElement.tagName === 'TEXTAREA' || document.activeElement.tagName === 'INPUT';
+
+    if (e.key.toLowerCase() === 'k' && !e.repeat && !isTyping) {
+        e.preventDefault();
+        noteFocusMode = !noteFocusMode;
+
+        if (noteFocusMode) {
+            readText("Note focus mode on. Tab will now move through notes only.");
+            enableNoteTabbing();
+        } else {
+            readText("Note focus mode off. Restoring normal tab behavior.");
+            disableNoteTabbing();
+        }
+    }
+
+    if (e.key.toLowerCase() === 'f' && !isTyping) {
         e.preventDefault();
         trapFocus = !trapFocus;
         synth.cancel();
@@ -232,15 +256,77 @@ document.addEventListener('keydown', (e) => {
         }
     }
 
-    if (e.key === 'Escape' && trapFocus) {
-        nav.style.right = '-60vw';
-        trapFocus = false;
-        setFocusableInNav(false);
-        document.activeElement.blur();
+
+
+    const key = parseInt(e.key, 10);
+    if (!isNaN(key) && key >= 1 && key <= 9 && !isTyping) {
+        highlightSentenceCount = key;
+        readText(`Highlighting ${highlightSentenceCount} sentence${highlightSentenceCount > 1 ? 's' : ''}.`);
     }
 });
 
-// ======= Update Styling Settings =======
+// ======= Word Export (Note on New Line & Bigger Font) =======
+document.addEventListener('keydown', async (e) => {
+    const isTyping = document.activeElement.tagName === 'TEXTAREA' || document.activeElement.tagName === 'INPUT';
+    if (e.key.toLowerCase() === 'w' && !isTyping) {
+        e.preventDefault();
+
+        const { Document, Packer, Paragraph, TextRun, HeadingLevel } = window.docx;
+
+        const docParagraphs = [];
+
+        paragraphs.forEach((p, pIndex) => {
+            docParagraphs.push(new Paragraph({
+                text: `Paragraph ${pIndex + 1}`,
+                heading: HeadingLevel.HEADING_2
+            }));
+
+            const sentences = splitIntoSentences(p.textContent);
+
+            sentences.forEach((sentence, idx) => {
+                const cleanText = sentence.trim().replace(/\s+/g, ' ');
+
+                // Add sentence
+                docParagraphs.push(new Paragraph({
+                    children: [new TextRun({ text: cleanText, size: 22 })]
+                }));
+
+                // Add note on a new line if available
+                if (p.notes && p.notes[idx]) {
+                    docParagraphs.push(new Paragraph({
+                        children: [new TextRun({
+                            text: `Note: ${p.notes[idx]}`,
+                            bold: true,
+                            italics: true,
+                            size: 26,
+                        })]
+                    }));
+                }
+            });
+        });
+
+        const doc = new Document({
+            sections: [{
+                properties: {},
+                children: docParagraphs
+            }]
+        });
+
+        const blob = await Packer.toBlob(doc);
+        const url = URL.createObjectURL(blob);
+
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'notes.docx';
+        a.click();
+
+        readText("Notes and text downloaded as Word document.");
+    }
+});
+
+
+
+// ======= Style Sliders Live =======
 fontSizeSlider.addEventListener('input', () => {
     const value = `${fontSizeSlider.value}px`;
     paragraphs.forEach(p => p.style.fontSize = value);
@@ -278,7 +364,8 @@ volumeSlider.addEventListener('input', () => {
 // ======= Set Sentence Highlight Count with 1–9 Keys =======
 document.addEventListener('keydown', (e) => {
     const key = parseInt(e.key, 10);
-    if (key >= 1 && key <= 9) {
+    const isTyping = document.activeElement.tagName === 'TEXTAREA' || document.activeElement.tagName === 'INPUT';
+    if (!isNaN(key) && key >= 1 && key <= 9 && !isTyping) {
         highlightSentenceCount = key;
         readText(`Highlighting ${highlightSentenceCount} sentence${highlightSentenceCount > 1 ? 's' : ''}.`);
     }

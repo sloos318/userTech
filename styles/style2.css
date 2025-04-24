@@ -41,7 +41,7 @@
     padding: 0;
     margin: 0;
     font-family: var(--default-font-family);
-    color: var(--yellowish-color);
+    color: yellow;
 }
 
 /* Removed the --font-now update as it will be handled by JavaScript */
@@ -102,7 +102,7 @@ main {
 }
 
 h1, h2, h3, p, label {
-    color: var(--yellowish-color);
+    color: yellow;
 }
 
 p {
@@ -162,6 +162,7 @@ textarea.hidden {
 
 .highlight {
     background-color: yellow;
+    color: var(--black-color);
 }
 
 .note {
@@ -181,7 +182,14 @@ p:focus {
     outline: var(--yellowish-color) 0px solid;
 }
 
-
+.note {
+    display: block;
+    width: 80%;
+    justify-self: right;
+    background-color: var(--black-color);
+    font-family: Opendyslexic, sans-serif;
+    margin: 2rem 1rem;
+}
 
 .visually-hidden {
     clip: rect(0 0 0 0);
